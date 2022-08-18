@@ -7,7 +7,7 @@
 package main
 
 import (
-	"github.com/gomelon/metas/mwire/testdata/bar"
+	"github.com/gomelon/autowire/testdata/bar"
 )
 
 // Injectors from wire.go:

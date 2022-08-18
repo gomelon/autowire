@@ -2,7 +2,7 @@ package bar
 
 import (
 	"fmt"
-	"github.com/gomelon/metas/mwire/testdata/foo"
+	"github.com/gomelon/autowire/testdata/foo"
 )
 
 var _ foo.Foo = &DefaultFoo{}
@@ -11,7 +11,7 @@ type DefaultFoo struct {
 }
 
 //NewDefaultFoo
-//wire:provider
+//+autowire.Provider
 func NewDefaultFoo() *DefaultFoo {
 	return &DefaultFoo{}
 }
@@ -36,7 +36,7 @@ type FooAOPWithGreetImpl struct {
 }
 
 //NewFooAOPWithGreet
-//wire:provider order=5
+//+autowire.Provider Order=5
 func NewFooAOPWithGreet(foo FooAOPForGreet, greeting Greeting) *FooAOPWithGreetImpl {
 	return &FooAOPWithGreetImpl{greeting: greeting, Foo: foo}
 }
@@ -58,7 +58,7 @@ type FooAOPWithByeImpl struct {
 }
 
 //NewFooAOPWithBye
-//wire:provider order=10
+//+autowire.Provider Order=10
 func NewFooAOPWithBye(foo FooAOPForBye, bye Bye) *FooAOPWithByeImpl {
 	return &FooAOPWithByeImpl{bye: bye, Foo: foo}
 }

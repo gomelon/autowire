@@ -3,7 +3,7 @@
 package bar
 
 import (
-	"github.com/gomelon/metas/mwire/testdata/foo"
+	"github.com/gomelon/autowire/testdata/foo"
 	"github.com/google/wire"
 )
 

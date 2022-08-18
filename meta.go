@@ -26,12 +26,16 @@ func DefaultPkgGenFactory() meta.PkgGenFactory {
 }
 
 const (
-	MetaWireProvider = "wire:provider"
+	MetaWireProvider = "+autowire.Provider"
 )
 
 var (
 	MetaNames = []string{MetaWireProvider}
 )
+
+type Provider struct {
+	Order int
+}
 
 //Order It is the injection order,lower values have higher priority(closer it is to the realization).
 func Order(m *meta.Meta) int32 {
@@ -41,7 +45,7 @@ func Order(m *meta.Meta) int32 {
 	}
 	order, err := strconv.ParseInt(orderStr, 10, 32)
 	if err != nil {
-		panic(fmt.Errorf("wire:provider get order fails: expected a int value,order=%s", orderStr))
+		panic(fmt.Errorf("+autowire.Provider get order fails: expected a int value,Order=%s", orderStr))
 	}
 	return int32(order)
 }

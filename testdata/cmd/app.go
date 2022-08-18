@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/gomelon/metas/mwire/testdata/foo"
+	"github.com/gomelon/autowire/testdata/foo"
 )
 
 type App struct {

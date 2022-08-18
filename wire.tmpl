@@ -1,0 +1,14 @@
+{{$parsedWireResult:=parseWire}}
+{{if $parsedWireResult.HasProvider }}
+    {{$wirePkg := import "github.com/google/wire"}}
+
+    var ProviderSet = {{$wirePkg}}.NewSet(
+    {{range $provider := $parsedWireResult.Providers -}}
+        {{$provider.Name}},
+    {{end}}
+
+    {{range $binding := $parsedWireResult.Bindings -}}
+        {{$wirePkg}}.Bind(new({{typeString $binding.InjectedIface}}),new({{typeString $binding.ProviderType}})),
+    {{end}}
+    )
+{{end}}

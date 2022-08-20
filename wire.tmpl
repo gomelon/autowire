@@ -5,10 +5,10 @@
     var ProviderSet = {{$wirePkg}}.NewSet(
     {{range $provider := $parsedWireResult.Providers -}}
         {{$provider.Name}},
-    {{end}}
+    {{end -}}
 
     {{range $binding := $parsedWireResult.Bindings -}}
         {{$wirePkg}}.Bind(new({{typeString $binding.InjectedIface}}),new({{typeString $binding.ProviderType}})),
-    {{end}}
+    {{end -}}
     )
 {{end}}

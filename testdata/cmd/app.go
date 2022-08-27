@@ -1,13 +1,15 @@
 package main
 
 import (
-	"github.com/gomelon/autowire/testdata/foo"
+	"github.com/gomelon/autowire/testdata/example"
 )
 
 type App struct {
-	foo foo.Foo
+	foo  example.FooIface
+	bar  example.BarIface
+	aMao example.AMaoIface
 }
 
-func NewApp(foo foo.Foo) *App {
-	return &App{foo: foo}
+func NewApp(foo example.FooIface, bar example.BarIface, aMao example.AMaoIface) *App {
+	return &App{foo: foo, bar: bar, aMao: aMao}
 }

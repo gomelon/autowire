@@ -5,10 +5,44 @@
     var ProviderSet = {{$wirePkg}}.NewSet(
     {{range $provider := $parsedWireResult.Providers -}}
         {{$provider.Name}},
-    {{end -}}
+    {{end }}
 
     {{range $binding := $parsedWireResult.Bindings -}}
-        {{$wirePkg}}.Bind(new({{typeString $binding.InjectedIface}}),new({{typeString $binding.ProviderType}})),
+        {{if eq $binding.OriginIface $binding.InjectedIface -}}
+            {{$injectedIfaceName := name $binding.InjectedIface -}}
+            New{{$injectedIfaceName}}WithProxyImpl,
+            {{$wirePkg}}.Bind(new({{$injectedIfaceName}}ForProxy),new({{typeString $binding.ProviderType}})),
+            {{$wirePkg}}.Bind(new({{typeString $binding.InjectedIface}}),new(*{{$injectedIfaceName}}WithProxyImpl)),
+        {{else -}}
+            {{$wirePkg}}.Bind(new({{typeString $binding.InjectedIface}}),new({{typeString $binding.ProviderType}})),
+        {{end -}}
     {{end -}}
     )
+
+    {{range $binding := $parsedWireResult.Bindings -}}
+        {{if eq $binding.OriginIface $binding.InjectedIface -}}
+            {{$injectedIfaceName := name $binding.InjectedIface}}
+            {{$proxyIfaceName := print $injectedIfaceName "ForProxy"}}
+            {{$proxyImplName := print $injectedIfaceName "WithProxyImpl"}}
+            {{$selfWirerObj := object "github.com/gomelon/autowire" "SelfWirer"}}
+
+            type {{$proxyIfaceName}} {{typeString $binding.InjectedIface}}
+
+            {{/*@formatter:off*/}}
+            type {{$proxyImplName}} struct {
+                {{typeString $binding.InjectedIface}}
+            }
+
+            func New{{$proxyImplName}}(_proxy {{$proxyIfaceName}}) *{{$proxyImplName}}{
+                _proxyImpl := &{{$proxyImplName}}{
+                    {{$injectedIfaceName}}: _proxy,
+                }
+            {{if assignableTo $binding.InjectedIface $selfWirerObj.Type -}}
+                _proxy.SetSelf(_proxyImpl)
+            {{end -}}
+                return _proxyImpl
+            }
+            {{/*@formatter:on*/}}
+        {{end -}}
+    {{end -}}
 {{end}}

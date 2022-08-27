@@ -7,15 +7,23 @@
 package main
 
 import (
-	"github.com/gomelon/autowire/testdata/bar"
+	"github.com/gomelon/autowire/testdata/example"
 )
 
 // Injectors from wire.go:
 
-func initApp(greeting bar.Greeting, bye bar.Bye) (*App, error) {
-	defaultFoo := bar.NewDefaultFoo()
-	fooAOPWithGreetImpl := bar.NewFooAOPWithGreet(defaultFoo, greeting)
-	fooAOPWithByeImpl := bar.NewFooAOPWithBye(fooAOPWithGreetImpl, bye)
-	app := NewApp(fooAOPWithByeImpl)
+func initApp(barGreeting example.BarGreeting, barBye example.BarBye, fooGreeting example.FooGreeting, fooBye example.FooBye) (*App, error) {
+	foo := example.NewDefaultFoo()
+	fooAOPWithGreetImpl := example.NewFooAOPWithGreet(foo, fooGreeting)
+	fooAOPWithByeImpl := example.NewFooAOPWithBye(fooAOPWithGreetImpl, fooBye)
+	fooIfaceWithProxyImpl := example.NewFooIfaceWithProxyImpl(fooAOPWithByeImpl)
+	bar := example.NewDefaultBar()
+	barAOPWithGreetImpl := example.NewBarAOPWithGreet(bar, barGreeting)
+	barAOPWithByeImpl := example.NewBarAOPWithBye(barAOPWithGreetImpl, barBye)
+	barIfaceWithProxyImpl := example.NewBarIfaceWithProxyImpl(barAOPWithByeImpl)
+	aMao := example.NewAMao()
+	aMaoWithGreetImpl := example.NewAMaoWithGreetImpl(aMao)
+	aMaoIfaceWithProxyImpl := example.NewAMaoIfaceWithProxyImpl(aMaoWithGreetImpl)
+	app := NewApp(fooIfaceWithProxyImpl, barIfaceWithProxyImpl, aMaoIfaceWithProxyImpl)
 	return app, nil
 }

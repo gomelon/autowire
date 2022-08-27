@@ -11,7 +11,7 @@ import (
 func TestTemplateGen(t *testing.T) {
 
 	workdir, _ := os.Getwd()
-	path := workdir + "/testdata/bar"
+	path := workdir + "/testdata/example"
 	generator, err := meta.NewTmplPkgGen(path, TmplWire, meta.WithOutputFilename("wire_set"),
 		meta.WithFuncMapFactory(func(generator *meta.TmplPkgGen) template.FuncMap {
 			return NewFunctions(generator).FuncMap()

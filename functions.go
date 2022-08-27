@@ -33,14 +33,15 @@ func (f *functions) FuncMap() template.FuncMap {
 
 type ParsedWireResult struct {
 	Providers []types.Object
-	Bindings  []*ProviderHolder
+	Bindings  []*ProviderBinding
 }
 
 func (r *ParsedWireResult) HasProvider() bool {
 	return len(r.Providers) > 0
 }
 
-type ProviderHolder struct {
+type ProviderBinding struct {
+	OriginIface   types.Type
 	Provider      types.Object
 	ProviderType  types.Type
 	InjectedIface types.Type
@@ -64,7 +65,7 @@ func (f *functions) ParseWire() (result *ParsedWireResult, err error) {
 
 	result.Providers = f.metaParser.FilterByMeta(MetaWireProvider, pkgFunctions)
 
-	providerTypeIfaceToProviders := map[types.Type][]types.Object{}
+	providerIfaceToProviders := map[types.Type][]types.Object{}
 	for _, function := range result.Providers {
 		providerObj := f.pkgParser.FirstResult(function)
 		if providerObj == nil {
@@ -79,7 +80,7 @@ func (f *functions) ParseWire() (result *ParsedWireResult, err error) {
 		}
 
 		for _, iface := range providerInterfaces {
-			providerTypeIfaceToProviders[iface] = append(providerTypeIfaceToProviders[iface], function)
+			providerIfaceToProviders[iface] = append(providerIfaceToProviders[iface], function)
 		}
 
 		firstParam := f.pkgParser.FirstParam(function)
@@ -88,48 +89,56 @@ func (f *functions) ParseWire() (result *ParsedWireResult, err error) {
 		}
 	}
 
-	for providerTypeIface, itfProviders := range providerTypeIfaceToProviders {
-		itfProviderHolders := make([]*ProviderHolder, 0, len(itfProviders))
-		for _, provider := range itfProviders {
+	for providerIface, providers := range providerIfaceToProviders {
+		providerBindings := make([]*ProviderBinding, 0, len(providers))
+		for _, provider := range providers {
 			providerObject := f.pkgParser.FirstResult(provider)
 			params := f.pkgParser.Params(provider)
 			needInjectParam := false
 			for _, param := range params {
-				if !f.pkgParser.AssignableTo(param.Type(), providerTypeIface) {
+				if !f.pkgParser.AssignableTo(param.Type(), providerIface) {
 					continue
 				}
 				needInjectParam = true
 				wireMeta := f.metaParser.ObjectMetaGroup(provider, MetaWireProvider)[0]
-				providerHolder := &ProviderHolder{
+				providerHolder := &ProviderBinding{
+					OriginIface:   providerIface,
 					Provider:      provider,
 					ProviderType:  providerObject.Type(),
 					InjectedIface: param.Type(),
 					Order:         Order(wireMeta),
 				}
-				itfProviderHolders = append(itfProviderHolders, providerHolder)
+				providerBindings = append(providerBindings, providerHolder)
 			}
 			if !needInjectParam {
-				providerHolder := &ProviderHolder{
+				providerBinding := &ProviderBinding{
+					OriginIface:   providerIface,
 					Provider:      provider,
 					ProviderType:  providerObject.Type(),
-					InjectedIface: providerTypeIface,
+					InjectedIface: providerIface,
 					IsBase:        true,
 				}
-				itfProviderHolders = append(itfProviderHolders, providerHolder)
+				providerBindings = append(providerBindings, providerBinding)
 			}
 		}
-		sort.Slice(itfProviderHolders, func(i, j int) bool {
-			return itfProviderHolders[i].IsBase ||
-				!itfProviderHolders[j].IsBase &&
-					(itfProviderHolders[i].Order > itfProviderHolders[j].Order ||
-						itfProviderHolders[i].Provider.Name() > itfProviderHolders[j].Provider.Name())
-		})
-		for i, size := 0, len(itfProviderHolders); i < size-1; i++ {
-			itfProviderHolders[i].InjectedIface, itfProviderHolders[i+1].InjectedIface =
-				itfProviderHolders[i+1].InjectedIface, itfProviderHolders[i].InjectedIface
+
+		f.sortProviderBindings(providerBindings)
+
+		for i, size := 0, len(providerBindings); i < size-1; i++ {
+			providerBindings[i].InjectedIface, providerBindings[i+1].InjectedIface =
+				providerBindings[i+1].InjectedIface, providerBindings[i].InjectedIface
 		}
-		result.Bindings = append(result.Bindings, itfProviderHolders...)
+		result.Bindings = append(result.Bindings, providerBindings...)
 	}
 
 	return
+}
+
+func (f *functions) sortProviderBindings(itfProviderBindings []*ProviderBinding) {
+	sort.Slice(itfProviderBindings, func(i, j int) bool {
+		return itfProviderBindings[i].IsBase ||
+			!itfProviderBindings[j].IsBase &&
+				(itfProviderBindings[i].Order > itfProviderBindings[j].Order ||
+					itfProviderBindings[i].Provider.Name() > itfProviderBindings[j].Provider.Name())
+	})
 }

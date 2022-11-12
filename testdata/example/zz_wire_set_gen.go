@@ -16,6 +16,10 @@ var ProviderSet = wire.NewSet(
 	NewFooAOPWithBye,
 	NewFooAOPWithGreet,
 
+	wire.Bind(new(AMaoForGreet), new(*AMao)),
+	NewAMaoIfaceWithProxyImpl,
+	wire.Bind(new(AMaoIfaceForProxy), new(*AMaoWithGreetImpl)),
+	wire.Bind(new(AMaoIface), new(*AMaoIfaceWithProxyImpl)),
 	wire.Bind(new(BarAOPForGreet), new(*Bar)),
 	wire.Bind(new(BarAOPForBye), new(*BarAOPWithGreetImpl)),
 	NewBarIfaceWithProxyImpl,
@@ -26,11 +30,21 @@ var ProviderSet = wire.NewSet(
 	NewFooIfaceWithProxyImpl,
 	wire.Bind(new(FooIfaceForProxy), new(*FooAOPWithByeImpl)),
 	wire.Bind(new(FooIface), new(*FooIfaceWithProxyImpl)),
-	wire.Bind(new(AMaoForGreet), new(*AMao)),
-	NewAMaoIfaceWithProxyImpl,
-	wire.Bind(new(AMaoIfaceForProxy), new(*AMaoWithGreetImpl)),
-	wire.Bind(new(AMaoIface), new(*AMaoIfaceWithProxyImpl)),
 )
+
+type AMaoIfaceForProxy AMaoIface
+
+type AMaoIfaceWithProxyImpl struct {
+	AMaoIface
+}
+
+func NewAMaoIfaceWithProxyImpl(_proxy AMaoIfaceForProxy) *AMaoIfaceWithProxyImpl {
+	_proxyImpl := &AMaoIfaceWithProxyImpl{
+		AMaoIface: _proxy,
+	}
+	_proxy.SetSelf(_proxyImpl)
+	return _proxyImpl
+}
 
 type BarIfaceForProxy BarIface
 
@@ -55,19 +69,5 @@ func NewFooIfaceWithProxyImpl(_proxy FooIfaceForProxy) *FooIfaceWithProxyImpl {
 	_proxyImpl := &FooIfaceWithProxyImpl{
 		FooIface: _proxy,
 	}
-	return _proxyImpl
-}
-
-type AMaoIfaceForProxy AMaoIface
-
-type AMaoIfaceWithProxyImpl struct {
-	AMaoIface
-}
-
-func NewAMaoIfaceWithProxyImpl(_proxy AMaoIfaceForProxy) *AMaoIfaceWithProxyImpl {
-	_proxyImpl := &AMaoIfaceWithProxyImpl{
-		AMaoIface: _proxy,
-	}
-	_proxy.SetSelf(_proxyImpl)
 	return _proxyImpl
 }
